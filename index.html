@@ -904,12 +904,55 @@ function handlePhoto(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  // Indicateur visuel : compression en cours
+  const placeholder = document.getElementById('photo-placeholder');
+  if (placeholder) placeholder.innerHTML = '<span class="loader"></span><br><br><strong>Optimisation...</strong>';
+
   const reader = new FileReader();
   reader.onload = (e) => {
-    state.currentPhoto = e.target.result;
-    showPhoto();
+    compressImage(e.target.result, (compressedDataUrl, sizeKB) => {
+      state.currentPhoto = compressedDataUrl;
+      showPhoto();
+      if (sizeKB > 500) toast('📸 Photo optimisée : ' + sizeKB + ' Ko');
+    });
   };
   reader.readAsDataURL(file);
+}
+
+// Compression image — limite à 2048px et qualité dégressive jusqu'à <4 Mo
+function compressImage(dataUrl, callback) {
+  const MAX_DIM = 2048;
+  const MAX_SIZE = 4 * 1024 * 1024; // 4 Mo en base64 (marge sous limite API 5 Mo)
+
+  const img = new Image();
+  img.onload = () => {
+    let { width, height } = img;
+    if (width > MAX_DIM || height > MAX_DIM) {
+      const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+      width = Math.round(width * ratio);
+      height = Math.round(height * ratio);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+
+    let quality = 0.85;
+    let out = canvas.toDataURL('image/jpeg', quality);
+    // Réduit la qualité tant que la taille dépasse la limite
+    while (out.length * 0.75 > MAX_SIZE && quality > 0.4) {
+      quality -= 0.1;
+      out = canvas.toDataURL('image/jpeg', quality);
+    }
+    const sizeKB = Math.round(out.length * 0.75 / 1024);
+    callback(out, sizeKB);
+  };
+  img.onerror = () => {
+    // Si la compression échoue, on garde la photo originale
+    callback(dataUrl, 0);
+  };
+  img.src = dataUrl;
 }
 
 function showPhoto() {
@@ -970,16 +1013,35 @@ async function callClaude(messages, systemPrompt) {
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      console.error('Erreur API:', err);
-      throw new Error('Erreur ' + response.status + ' : ' + err);
+      const errText = await response.text();
+      console.error('Erreur API ' + response.status + ' :', errText);
+      // Tente d'extraire un message lisible
+      let humanMsg = 'Erreur ' + response.status;
+      try {
+        const errJson = JSON.parse(errText);
+        if (errJson.error && errJson.error.message) {
+          humanMsg += ' : ' + errJson.error.message;
+        } else if (errJson.error && errJson.error.type) {
+          humanMsg += ' : ' + errJson.error.type;
+        }
+      } catch(e) {
+        humanMsg += ' : ' + errText.substring(0, 200);
+      }
+      throw new Error(humanMsg);
     }
 
     const data = await response.json();
-    return data.content[0].text;
+    if (!data.content || !Array.isArray(data.content) || data.content.length === 0) {
+      console.error('Réponse API inattendue :', data);
+      throw new Error('Réponse API vide ou inattendue');
+    }
+    // Cherche le premier bloc texte
+    const textBlock = data.content.find(c => c.type === 'text');
+    if (!textBlock) throw new Error('Aucun texte dans la réponse');
+    return textBlock.text;
   } catch (error) {
     console.error(error);
-    toast('❌ Erreur : ' + error.message);
+    toast('❌ ' + error.message, 6000);
     return null;
   }
 }
