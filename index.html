@@ -483,13 +483,64 @@ hr {
 .history-item .title { font-size: 13px; font-weight: 600; }
 .history-item .meta { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
 
-small {
-  font-size: 11px;
+/* ============================================================
+   DICTÉE VOCALE — Bouton micro inline
+   ============================================================ */
+.mic-wrap {
+  position: relative;
+  width: 100%;
+}
+.mic-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
   color: var(--text-dim);
+  width: 34px;
+  height: 34px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-family: inherit;
+  transition: all 0.15s;
+  z-index: 2;
+}
+.mic-btn:hover, .mic-btn:active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-bg);
+}
+.mic-btn.recording {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: white;
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139, 42, 31, 0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(139, 42, 31, 0); }
+}
+.mic-btn-inline {
+  /* Variante pour le chat-input (champ input plus court) */
+  top: 50%;
+  transform: translateY(-50%);
+  right: 4px;
+}
+/* Padding-right sur les champs équipés du micro pour ne pas masquer le texte */
+.mic-wrap textarea, .mic-wrap input[type="text"] {
+  padding-right: 46px;
+}
+.mic-unsupported .mic-btn { display: none; }
+.mic-wrap textarea.mic-unsupported, .mic-wrap input.mic-unsupported {
+  padding-right: 12px;
 }
 </style>
 </head>
-<body>
 <body>
 
 <header>
@@ -580,7 +631,10 @@ small {
 
     <div class="field" style="margin-top: 16px;">
       <label>Observation / Question</label>
-      <textarea id="observation" placeholder="Décrivez ce que vous observez ou posez votre question..."></textarea>
+      <div class="mic-wrap">
+        <textarea id="observation" placeholder="Décrivez ce que vous observez ou posez votre question..."></textarea>
+        <button type="button" class="mic-btn" id="mic-observation" data-target="observation" onclick="toggleDictation('observation')" title="Dicter">🎤</button>
+      </div>
     </div>
 
     <button class="btn" id="analyze-btn" onclick="analyze()">🤖 Analyser avec Claude</button>
@@ -590,7 +644,10 @@ small {
     <div id="chat-zone" class="hidden">
       <hr>
       <div class="chat-input">
-        <input type="text" id="chat-input" placeholder="Question complémentaire..." onkeypress="if(event.key==='Enter')chat()">
+        <div class="mic-wrap" style="flex:1;">
+          <input type="text" id="chat-input" placeholder="Question complémentaire..." onkeypress="if(event.key==='Enter')chat()">
+          <button type="button" class="mic-btn mic-btn-inline" id="mic-chat-input" data-target="chat-input" onclick="toggleDictation('chat-input')" title="Dicter">🎤</button>
+        </div>
         <button onclick="chat()">➤</button>
       </div>
       <button class="btn btn-success" onclick="addToCart()">➕ Ajouter au panier de défauts</button>
@@ -1678,6 +1735,157 @@ window.addEventListener('load', () => {
     }
   } catch(e) { console.warn(e); }
 });
+
+// ============================================================
+// DICTÉE VOCALE — Web Speech API
+// ============================================================
+const dictation = {
+  recognition: null,
+  active: null,           // ID du champ en cours de dictée, ou null
+  baseText: '',           // Texte présent dans le champ avant démarrage
+  silenceTimer: null,
+  SILENCE_MS: 3000,       // Arrêt auto après 3s de silence
+  supported: false
+};
+
+(function initDictation() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    // Navigateur sans support : cacher les boutons micro proprement
+    document.querySelectorAll('.mic-btn').forEach(b => b.style.display = 'none');
+    document.querySelectorAll('.mic-wrap').forEach(w => {
+      const ta = w.querySelector('textarea, input');
+      if (ta) ta.classList.add('mic-unsupported');
+    });
+    return;
+  }
+  dictation.supported = true;
+  dictation.recognition = new SR();
+  dictation.recognition.continuous = true;
+  dictation.recognition.interimResults = true;
+
+  // Langue : français suisse en priorité, fallback FR
+  dictation.recognition.lang = 'fr-CH';
+
+  dictation.recognition.onresult = (event) => {
+    if (!dictation.active) return;
+    let finalText = '';
+    let interimText = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) finalText += transcript;
+      else interimText += transcript;
+    }
+    // Reconstruction : base + finalisé + intérim
+    const target = document.getElementById(dictation.active);
+    if (!target) return;
+    const sep = dictation.baseText && !dictation.baseText.endsWith(' ') && !dictation.baseText.endsWith('\n') ? ' ' : '';
+    target.value = dictation.baseText + sep + finalText + interimText;
+    // Si du texte final arrive, on le verrouille dans la base et on reset le timer silence
+    if (finalText) {
+      dictation.baseText = target.value;
+      resetSilenceTimer();
+    } else if (interimText) {
+      resetSilenceTimer();
+    }
+  };
+
+  dictation.recognition.onerror = (e) => {
+    console.warn('Dictée erreur:', e.error);
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      toast('🎤 Autorisation micro refusée', 4000);
+    } else if (e.error === 'no-speech') {
+      // Silence prolongé : pas grave, le timer fera le reste
+    } else if (e.error === 'language-not-supported') {
+      // Fallback fr-FR si fr-CH indisponible
+      dictation.recognition.lang = 'fr-FR';
+      try { dictation.recognition.start(); return; } catch(_) {}
+    } else if (e.error === 'network') {
+      toast('🎤 Pas de réseau pour la dictée', 4000);
+    }
+    stopDictation();
+  };
+
+  dictation.recognition.onend = () => {
+    // Si arrêt non sollicité alors qu'on est encore actif, on essaie de redémarrer
+    if (dictation.active) {
+      try { dictation.recognition.start(); } catch(e) { stopDictation(); }
+    }
+  };
+})();
+
+function toggleDictation(targetId) {
+  if (!dictation.supported) {
+    toast('🎤 Dictée non supportée par ce navigateur', 4000);
+    return;
+  }
+  if (dictation.active === targetId) {
+    stopDictation();
+  } else {
+    if (dictation.active) stopDictation();
+    startDictation(targetId);
+  }
+}
+
+function startDictation(targetId) {
+  const target = document.getElementById(targetId);
+  if (!target) return;
+  dictation.active = targetId;
+  dictation.baseText = target.value || '';
+  // Marquer le bouton
+  const btn = document.getElementById('mic-' + targetId);
+  if (btn) {
+    btn.classList.add('recording');
+    btn.textContent = '⏸';
+    btn.title = 'Arrêter la dictée';
+  }
+  // Coupe la dictée si l'utilisateur tape au clavier
+  target.addEventListener('keydown', dictationKeydownHandler, { once: true });
+  try {
+    dictation.recognition.start();
+    resetSilenceTimer();
+    toast('🎤 Parle, j\'écoute...', 1800);
+  } catch(e) {
+    console.warn(e);
+    stopDictation();
+  }
+}
+
+function stopDictation() {
+  if (dictation.silenceTimer) {
+    clearTimeout(dictation.silenceTimer);
+    dictation.silenceTimer = null;
+  }
+  const activeId = dictation.active;
+  dictation.active = null;
+  // Restaurer le bouton
+  if (activeId) {
+    const btn = document.getElementById('mic-' + activeId);
+    if (btn) {
+      btn.classList.remove('recording');
+      btn.textContent = '🎤';
+      btn.title = 'Dicter';
+    }
+    const target = document.getElementById(activeId);
+    if (target) target.removeEventListener('keydown', dictationKeydownHandler);
+  }
+  try { dictation.recognition.stop(); } catch(_) {}
+}
+
+function dictationKeydownHandler() {
+  // L'utilisateur tape : on stoppe la dictée pour éviter les conflits
+  stopDictation();
+}
+
+function resetSilenceTimer() {
+  if (dictation.silenceTimer) clearTimeout(dictation.silenceTimer);
+  dictation.silenceTimer = setTimeout(() => {
+    if (dictation.active) {
+      toast('🎤 Dictée terminée', 1500);
+      stopDictation();
+    }
+  }, dictation.SILENCE_MS);
+}
 
 </script>
 </body>
