@@ -539,6 +539,56 @@ hr {
 .mic-wrap textarea.mic-unsupported, .mic-wrap input.mic-unsupported {
   padding-right: 12px;
 }
+
+/* ============================================================
+   BADGE VERDICT (CONFORME / À VÉRIFIER / NON CONFORME)
+   ============================================================ */
+.verdict-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 2px;
+  margin-bottom: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 16px;
+  border-left: 5px solid;
+}
+.verdict-badge .verdict-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+.verdict-badge .verdict-label {
+  flex: 1;
+}
+.verdict-conforme {
+  background: var(--primary-bg);
+  color: var(--primary-dark);
+  border-left-color: var(--primary);
+}
+.verdict-verif {
+  background: #FBF3DC;
+  color: #6B4F0E;
+  border-left-color: var(--warning);
+}
+.verdict-nonconforme {
+  background: #F5DDD8;
+  color: #6B1F17;
+  border-left-color: var(--danger);
+}
+.verdict-synthese {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0 0 14px 0;
+  padding: 10px 14px;
+  background: var(--surface);
+  border-left: 3px solid var(--text-dim);
+  color: var(--text);
+  font-style: italic;
+}
+
 </style>
 </head>
 <body>
@@ -792,46 +842,127 @@ CONTEXTE UTILISATEUR :
 - Autorisation de contrôle : K-362229-1
 - Tu l'assistes sur le terrain lors de contrôles périodiques ou initiaux
 
-CADRE NORMATIF À MOBILISER :
+═══════════════════════════════════════════════════════════════
+PRINCIPE FONDAMENTAL — VERDICT EN 3 NIVEAUX
+═══════════════════════════════════════════════════════════════
+
+Tu n'es PAS obligé de trouver un défaut. La majorité des installations
+contrôlées sont conformes — c'est même la norme attendue.
+
+Tu DOIS classer chaque analyse dans UN des trois verdicts :
+
+🟢 CONFORME
+   L'installation visible respecte la NIBT. Aucune action requise.
+   → Indique POURQUOI c'est conforme (preuves de conformité).
+
+🟡 A_VERIFIER
+   Élément(s) non visible(s) sur la photo nécessitant un contrôle
+   complémentaire (mesure, démontage, contexte amont/aval, doc).
+   → Liste précise des points à vérifier physiquement.
+
+🔴 NON_CONFORME
+   Défaut(s) identifié(s) avec CERTITUDE depuis la photo + contexte.
+   → Liste exhaustive avec articles NIBT et texte ElektroForm.
+
+RÈGLE D'OR : un faux positif (signaler un défaut là où il n'y en a pas)
+est AUSSI GRAVE qu'un faux négatif. Cela décrédibilise le contrôleur,
+stresse inutilement le propriétaire et génère des coûts injustifiés.
+Dans le doute → A_VERIFIER, JAMAIS NON_CONFORME par précaution.
+
+═══════════════════════════════════════════════════════════════
+CAS TYPIQUES SUISSES — À NE PAS SIGNALER COMME DÉFAUTS
+═══════════════════════════════════════════════════════════════
+
+PRISES DOMESTIQUES (toutes conformes en Suisse) :
+- T13 : prise suisse SEV 1011, 10A 250V, type J — STANDARD ACTUEL, OK
+- T15 : prise triphasée 10A — OK pour applications adaptées
+- T23 : prise 16A 250V monophasée — OK
+- T25 : prise triphasée 16A — OK
+- Sch3 / Schuko / CEE 7/4 : prise type F allemande/européenne 16A
+  → AUTORISÉE en Suisse, fréquente pour clientèle internationale,
+     hôtels, locations Airbnb. Moins idéale (polarité non garantie)
+     mais PAS un défaut. Ne JAMAIS signaler comme non-conforme.
+- Combinés interrupteur G1 + prise (Sch3 / T13 / T13+Sch3) :
+  → PARFAITEMENT CONFORMES si correctement câblés.
+  → Article NIBT 5.5.1 (appareillage), pas d'interdiction.
+- T12 (ancienne 2 broches sans terre) :
+  → À VÉRIFIER selon contexte (local sec sans obligation PE possible
+     dans certains cas anciens). Pas systématiquement défaut.
+
+INTERRUPTEURS :
+- G1 (simple), G1+1 (double), G3 (va-et-vient), poussoirs : tous OK
+- Variateurs, détecteurs présence : OK
+- Marques courantes : Feller (EDIZIOdue, NEVO), Hager, ABB, Schneider,
+  Legrand, Gira → toutes homologuées SEV.
+
+AUTRES ÉLÉMENTS NEUTRES :
+- Boîtes d'encastrement Agro / Spelsberg / Kaiser : OK
+- Câbles TT visibles propres et fixés : OK
+- Goulottes, tubes ICTA : OK selon contexte
+- Tableaux électriques Hager Volta / ABB / Schneider Resi9 : OK
+- Disjoncteurs courbe B/C/D : OK selon usage
+
+═══════════════════════════════════════════════════════════════
+QUAND IL Y A VRAIMENT UN DÉFAUT
+═══════════════════════════════════════════════════════════════
+
+Signaler NON_CONFORME UNIQUEMENT si visible/établi :
+- Absence manifeste de protection (boîtier ouvert, PE déconnecté visible)
+- Mauvais IP pour le local (prise sèche dans douche, etc.)
+- Surchauffe visible (noircissement, brûlure)
+- Câblage apparent non protégé
+- Section conducteur visiblement sous-dimensionnée
+- Installation bricolée (dominos visibles, scotch, etc.)
+- Hauteur clairement insuffisante (prise au sol en milieu humide)
+- Mélange dangereux de circuits
+
+═══════════════════════════════════════════════════════════════
+CADRE NORMATIF À MOBILISER
+═══════════════════════════════════════════════════════════════
 - NIBT SN 411000 (selon édition applicable au contexte)
-- OIBT (RS 734.27) - Ordonnance sur les installations à basse tension
-- LIE (RS 734.0)
-- OMBT (RS 734.26)
+- OIBT (RS 734.27), LIE (RS 734.0), OMBT (RS 734.26)
 - Ordonnance DETEC (RS 734.272.3)
-- Directives ESTI (Inspectorat fédéral)
-- Directives AEAI (protection incendie - classes RF1 à RF4, directives 13-15)
-- Directives SUVA (sécurité au travail, EN 50110)
+- Directives ESTI, AEAI (RF1-RF4, dir. 13-15), SUVA (EN 50110)
 - Prescriptions du GRD local quand pertinent
 
-SORTIE OBLIGATOIRE - format JSON strict :
+═══════════════════════════════════════════════════════════════
+SORTIE OBLIGATOIRE - format JSON strict
+═══════════════════════════════════════════════════════════════
+
 {
-  "article_nibt": "X.X.X.X (référence précise)",
+  "verdict": "CONFORME" | "A_VERIFIER" | "NON_CONFORME",
+  "synthese": "1 phrase claire résumant l'analyse",
+  "elements_identifies": "Description objective de ce qu'on voit (matériel, marque/type si visible, état général)",
+  "article_nibt": "X.X.X.X (référence si applicable, vide si CONFORME sans article spécifique)",
   "edition_applicable": "NIBT 2025/2020/...",
-  "texte_defaut": "Formulation type Navigateur de textes de défauts ElektroForm",
-  "priorite": 1-4 (1=danger imminent, 2=danger important, 3=non-conformité, 4=remarque),
-  "delai_correction": "Immédiat / 6 mois / 1 an / Prochain contrôle",
-  "explication": "Pourquoi c'est un défaut, contexte technique",
-  "references_legales": ["OIBT art. X", "AEAI 13-15 §X", ...],
-  "actions_correctives": ["Action 1", "Action 2"],
-  "questions_complementaires": ["Question si info manquante"]
+  "texte_defaut": "UNIQUEMENT si NON_CONFORME : formulation type Navigateur ElektroForm. SINON : chaîne vide",
+  "priorite": "1=danger imminent / 2=danger important / 3=non-conformité / 4=remarque / null si CONFORME",
+  "delai_correction": "Immédiat / 6 mois / 1 an / Prochain contrôle / null si CONFORME",
+  "explication": "Justification du verdict",
+  "preuves_conformite": ["Si CONFORME : liste des points qui confirment la conformité"],
+  "points_a_verifier": ["Si A_VERIFIER : liste précise des contrôles complémentaires"],
+  "references_legales": ["OIBT art. X", ...],
+  "actions_correctives": ["Si NON_CONFORME : actions à mener"],
+  "questions_complementaires": ["Questions si info manquante pour trancher"]
 }
 
-RÈGLES :
+═══════════════════════════════════════════════════════════════
+RÈGLES GÉNÉRALES
+═══════════════════════════════════════════════════════════════
 - TOUJOURS répondre en français
-- Citer l'article NIBT précis avec édition
-- Si la photo/observation est insuffisante, poser des questions ciblées dans questions_complementaires
-- Distinguer clairement : exigence normative / recommandation / bonne pratique
-- En cas de doute, indiquer "Vérification sur place nécessaire" plutôt que d'inventer
-- Tenir compte de l'édition NIBT applicable selon date d'installation`;
+- Distinguer : exigence normative / recommandation / bonne pratique
+- En cas de doute : A_VERIFIER, jamais NON_CONFORME par précaution
+- Si questions_complementaires non vide → privilégier A_VERIFIER
+- Tenir compte de l'édition NIBT applicable selon date d'installation
+- Texte ElektroForm uniquement si NON_CONFORME avéré`;
 
 const SYS_PROMPT_STRICT = SYS_PROMPT_BASE + `
 
 MODE : NORMATIF STRICT (style ESTI)
 - Vocabulaire technique précis, sec, sans fioritures
 - Citation exacte article + alinéa
-- Texte de défaut formulé comme dans le Navigateur ElektroForm (impersonnel, factuel)
-- Pas d'explication pédagogique sauf si demandée
-- "explication" très brève (1-2 phrases max)`;
+- Si NON_CONFORME : texte_defaut formulé comme Navigateur ElektroForm (impersonnel, factuel)
+- explication brève (1-2 phrases max)`;
 
 const SYS_PROMPT_PEDAGO = SYS_PROMPT_BASE + `
 
@@ -839,7 +970,7 @@ MODE : PÉDAGOGIQUE
 - Explique le POURQUOI de la norme (sécurité, retour d'expérience, accidents historiques)
 - Vulgarise sans perdre en rigueur
 - Mentionne les pièges fréquents et bonnes pratiques
-- "explication" développée (3-5 phrases avec contexte)
+- explication développée (3-5 phrases avec contexte)
 - Suggère des alternatives quand pertinent`;
 
 // ============================================================
@@ -1191,43 +1322,127 @@ function displayAnalysis(text) {
 
   const parsed = parseAnalysis(text);
 
-  if (parsed.article_nibt) {
-    let html = '';
-    html += `<h3>📐 Article NIBT</h3>${escapeHtml(parsed.article_nibt)} <em>(${escapeHtml(parsed.edition_applicable || '')})</em>`;
-
-    if (parsed.priorite) {
-      const pClass = `priority-${parsed.priorite}`;
-      const pLabel = ['', 'Danger immédiat', 'Danger important', 'Non-conformité', 'Remarque'][parsed.priorite];
-      html += `<h3>⚠️ Priorité</h3><span class="priority ${pClass}">P${parsed.priorite} - ${pLabel}</span>`;
-    }
-
-    if (parsed.texte_defaut) {
-      html += `<h3>📝 Texte de défaut</h3>${escapeHtml(parsed.texte_defaut)}`;
-    }
-
-    if (parsed.delai_correction) {
-      html += `<h3>⏱️ Délai</h3>${escapeHtml(parsed.delai_correction)}`;
-    }
-
-    if (parsed.explication) {
-      html += `<h3>💡 Explication</h3>${escapeHtml(parsed.explication)}`;
-    }
-
-    if (parsed.references_legales && parsed.references_legales.length) {
-      html += `<h3>📚 Références</h3>${parsed.references_legales.map(escapeHtml).join('<br>')}`;
-    }
-
-    if (parsed.actions_correctives && parsed.actions_correctives.length) {
-      html += `<h3>🔧 Actions correctives</h3>${parsed.actions_correctives.map(a => '• ' + escapeHtml(a)).join('<br>')}`;
-    }
-
-    if (parsed.questions_complementaires && parsed.questions_complementaires.length) {
-      html += `<h3>❓ Questions complémentaires</h3>${parsed.questions_complementaires.map(q => '• ' + escapeHtml(q)).join('<br>')}`;
-    }
-
-    result.innerHTML = html;
-  } else {
+  // Cas où le JSON n'a pas été parsé (texte brut)
+  if (!parsed.verdict && !parsed.article_nibt) {
     result.textContent = text;
+    return;
+  }
+
+  let html = '';
+
+  // ============================================================
+  // BADGE VERDICT EN PREMIER (CONFORME / À VÉRIFIER / NON CONFORME)
+  // ============================================================
+  const verdict = (parsed.verdict || '').toUpperCase();
+  let badgeClass = '', badgeIcon = '', badgeLabel = '';
+  if (verdict === 'CONFORME') {
+    badgeClass = 'verdict-conforme';
+    badgeIcon = '🟢';
+    badgeLabel = 'CONFORME';
+  } else if (verdict === 'A_VERIFIER' || verdict === 'À_VÉRIFIER' || verdict === 'A VERIFIER') {
+    badgeClass = 'verdict-verif';
+    badgeIcon = '🟡';
+    badgeLabel = 'À VÉRIFIER';
+  } else if (verdict === 'NON_CONFORME' || verdict === 'NON CONFORME') {
+    badgeClass = 'verdict-nonconforme';
+    badgeIcon = '🔴';
+    badgeLabel = 'NON CONFORME';
+  } else if (parsed.article_nibt && parsed.priorite) {
+    // Fallback : ancien format sans verdict explicite mais avec défaut → non-conforme
+    badgeClass = 'verdict-nonconforme';
+    badgeIcon = '🔴';
+    badgeLabel = 'NON CONFORME';
+  } else if (parsed.article_nibt) {
+    badgeClass = 'verdict-verif';
+    badgeIcon = '🟡';
+    badgeLabel = 'À VÉRIFIER';
+  }
+
+  if (badgeLabel) {
+    html += `<div class="verdict-badge ${badgeClass}">
+      <span class="verdict-icon">${badgeIcon}</span>
+      <span class="verdict-label">${badgeLabel}</span>
+    </div>`;
+  }
+
+  // Synthèse
+  if (parsed.synthese) {
+    html += `<div class="verdict-synthese">${escapeHtml(parsed.synthese)}</div>`;
+  }
+
+  // Éléments identifiés
+  if (parsed.elements_identifies) {
+    html += `<h3>👁 Éléments identifiés</h3>${escapeHtml(parsed.elements_identifies)}`;
+  }
+
+  // Preuves de conformité (verdict CONFORME)
+  if (parsed.preuves_conformite && parsed.preuves_conformite.length) {
+    html += `<h3>✓ Preuves de conformité</h3>${parsed.preuves_conformite.map(p => '• ' + escapeHtml(p)).join('<br>')}`;
+  }
+
+  // Points à vérifier (verdict À VÉRIFIER)
+  if (parsed.points_a_verifier && parsed.points_a_verifier.length) {
+    html += `<h3>🔍 Points à vérifier</h3>${parsed.points_a_verifier.map(p => '• ' + escapeHtml(p)).join('<br>')}`;
+  }
+
+  // Article NIBT (toujours utile si présent)
+  if (parsed.article_nibt) {
+    html += `<h3>📐 Article NIBT</h3>${escapeHtml(parsed.article_nibt)}`;
+    if (parsed.edition_applicable) html += ` <em>(${escapeHtml(parsed.edition_applicable)})</em>`;
+  }
+
+  // Priorité (uniquement si défaut)
+  if (parsed.priorite && verdict === 'NON_CONFORME') {
+    const pClass = `priority-${parsed.priorite}`;
+    const pLabel = ['', 'Danger immédiat', 'Danger important', 'Non-conformité', 'Remarque'][parsed.priorite] || '';
+    html += `<h3>⚠️ Priorité</h3><span class="priority ${pClass}">P${parsed.priorite} - ${pLabel}</span>`;
+  }
+
+  // Texte de défaut (uniquement si NON_CONFORME)
+  if (parsed.texte_defaut && verdict === 'NON_CONFORME') {
+    html += `<h3>📝 Texte de défaut</h3>${escapeHtml(parsed.texte_defaut)}`;
+  }
+
+  // Délai (uniquement si défaut)
+  if (parsed.delai_correction && verdict === 'NON_CONFORME') {
+    html += `<h3>⏱️ Délai</h3>${escapeHtml(parsed.delai_correction)}`;
+  }
+
+  // Explication
+  if (parsed.explication) {
+    html += `<h3>💡 Explication</h3>${escapeHtml(parsed.explication)}`;
+  }
+
+  // Références légales
+  if (parsed.references_legales && parsed.references_legales.length) {
+    html += `<h3>📚 Références</h3>${parsed.references_legales.map(escapeHtml).join('<br>')}`;
+  }
+
+  // Actions correctives (uniquement si NON_CONFORME)
+  if (parsed.actions_correctives && parsed.actions_correctives.length && verdict === 'NON_CONFORME') {
+    html += `<h3>🔧 Actions correctives</h3>${parsed.actions_correctives.map(a => '• ' + escapeHtml(a)).join('<br>')}`;
+  }
+
+  // Questions complémentaires
+  if (parsed.questions_complementaires && parsed.questions_complementaires.length) {
+    html += `<h3>❓ Questions complémentaires</h3>${parsed.questions_complementaires.map(q => '• ' + escapeHtml(q)).join('<br>')}`;
+  }
+
+  result.innerHTML = html;
+
+  // Adapter le bouton "Ajouter au panier" selon le verdict
+  updateCartButton(verdict);
+}
+
+function updateCartButton(verdict) {
+  // Cache le bouton "Ajouter au panier" si l'analyse est CONFORME
+  // (rien à ajouter au panier de défauts dans ce cas)
+  const cartBtn = document.querySelector('#chat-zone .btn-success');
+  if (!cartBtn) return;
+  if (verdict === 'CONFORME') {
+    cartBtn.style.display = 'none';
+  } else {
+    cartBtn.style.display = '';
   }
 }
 
@@ -1278,6 +1493,13 @@ function addToCart() {
     return;
   }
 
+  // Empêche l'ajout au panier si l'installation est CONFORME
+  const verdict = (state.currentAnalysis.verdict || '').toUpperCase();
+  if (verdict === 'CONFORME') {
+    toast('✅ Installation conforme — rien à ajouter au panier', 3500);
+    return;
+  }
+
   const ctx = {
     local: document.getElementById('ctx-local').value,
     observation: document.getElementById('observation').value
@@ -1285,14 +1507,17 @@ function addToCart() {
 
   const defect = {
     id: Date.now(),
+    verdict: verdict || 'NON_CONFORME',
     article: state.currentAnalysis.article_nibt || 'N/A',
     edition: state.currentAnalysis.edition_applicable || '',
-    texte: state.currentAnalysis.texte_defaut || state.currentAnalysis.raw || '',
+    texte: state.currentAnalysis.texte_defaut || state.currentAnalysis.synthese || state.currentAnalysis.raw || '',
+    synthese: state.currentAnalysis.synthese || '',
     priorite: state.currentAnalysis.priorite || 3,
     delai: state.currentAnalysis.delai_correction || '',
     explication: state.currentAnalysis.explication || '',
     actions: state.currentAnalysis.actions_correctives || [],
     references: state.currentAnalysis.references_legales || [],
+    points_a_verifier: state.currentAnalysis.points_a_verifier || [],
     local: ctx.local,
     observation: ctx.observation,
     photo: state.currentPhoto,
@@ -1303,7 +1528,8 @@ function addToCart() {
   saveCurrentControl();
   renderCart();
 
-  toast('✅ Défaut ajouté au panier');
+  const label = verdict === 'A_VERIFIER' ? 'Point à vérifier ajouté' : 'Défaut ajouté au panier';
+  toast('✅ ' + label);
 
   // Reset analyse en cours
   document.getElementById('observation').value = '';
